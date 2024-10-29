@@ -1,6 +1,6 @@
 import Carousel from 'react-bootstrap/Carousel';
-import Ceiling from './assets/ceiling.jpg';
-import Sauna2 from './assets/sauna2.jpg';
+import Ceiling from './assets/ceiling.webp';
+import Sauna2 from './assets/sauna2.webp';
 import Spa from './assets/spa.jpg';
 
 function Banners() {
