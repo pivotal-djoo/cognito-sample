@@ -21,8 +21,8 @@ function Header() {
     >
       <Container fluid>
         <Navbar.Brand
-          onClick={() => navigate('/')}
           style={{ cursor: 'pointer' }}
+          onClick={() => handleClick('/')}
         >
           <Image
             alt=""
