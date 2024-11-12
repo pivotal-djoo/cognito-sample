@@ -1,18 +1,33 @@
 import { useEffect, useState } from 'react';
 import { Button, Container, Form, Image, Nav, Navbar } from 'react-bootstrap';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { handleLoginRedirect, isAuthenticated, login, logout } from './Auth';
+import {
+  getUserInfo,
+  handleLoginRedirect,
+  isAuthenticated,
+  login,
+  logout,
+} from './Auth';
 import ViteLogo from '/vite.svg';
 
 function Header() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [expanded, setExpanded] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
+  const [userFirstName, setUserFirstName] = useState('');
 
   const handleClick = (path: string) => {
     setExpanded(false);
     navigate(path);
+  };
+
+  const showLoggedInUser = () => {
+    getUserInfo().then((userInfo) => {
+      if (userInfo) {
+        setUserFirstName(userInfo.given_name);
+      }
+    });
   };
 
   useEffect(() => {
@@ -20,9 +35,16 @@ function Header() {
     const code = urlParams.get('code');
     console.log('useEffect with code: ', code);
     if (code) {
-      handleLoginRedirect(code);
-      searchParams.delete('code');
-      setSearchParams(searchParams);
+      handleLoginRedirect(code).then(() => {
+        searchParams.delete('code');
+        setSearchParams(searchParams);
+        setIsLoggedIn(isAuthenticated());
+        showLoggedInUser();
+      });
+    }
+
+    if (isAuthenticated()) {
+      showLoggedInUser();
     }
   }, []);
 
@@ -62,11 +84,19 @@ function Header() {
             </Nav.Link>
             <Nav.Link onClick={() => handleClick('/contact')}>Contact</Nav.Link>
           </Nav>
-          <Form className="d-flex my-2, my-lg-0">
-            {isAuthenticated() ? (
-              <Button variant="outline-secondary" onClick={logout}>
-                Logout
-              </Button>
+          {userFirstName && (
+            <Navbar.Text className="d-flex my-2 my-lg-0">
+              Welcome, {userFirstName}
+            </Navbar.Text>
+          )}
+          <Form className="d-flex my-2 my-lg-0">
+            {isLoggedIn ? (
+              <>
+                <Navbar.Text className="mx-0 mx-lg-2"></Navbar.Text>
+                <Button variant="outline-secondary" onClick={logout}>
+                  Logout
+                </Button>
+              </>
             ) : (
               <Button variant="outline-secondary" onClick={login}>
                 Login
