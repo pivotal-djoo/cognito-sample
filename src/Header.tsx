@@ -5,8 +5,10 @@ import {
   getUserInfo,
   handleLoginRedirect,
   isAuthenticated,
+  isTokenExpired,
   login,
   logout,
+  refreshTokens,
 } from './Auth';
 import ViteLogo from '/vite.svg';
 
@@ -22,30 +24,29 @@ function Header() {
     navigate(path);
   };
 
-  const showLoggedInUser = () => {
-    getUserInfo().then((userInfo) => {
-      if (userInfo) {
-        setUserFirstName(userInfo.given_name);
-      }
-    });
+  const showLoggedInUser = async () => {
+    const userInfo = await getUserInfo();
+    if (userInfo) {
+      setUserFirstName(userInfo.given_name);
+    }
+  };
+
+  const updateHeader = async (code: string | null) => {
+    if (code) {
+      await handleLoginRedirect(code);
+      searchParams.delete('code');
+      setSearchParams(searchParams);
+      setIsLoggedIn(isAuthenticated());
+    } else if (isAuthenticated() && isTokenExpired()) {
+      await refreshTokens();
+    }
+    await showLoggedInUser();
   };
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
-    console.log('useEffect with code: ', code);
-    if (code) {
-      handleLoginRedirect(code).then(() => {
-        searchParams.delete('code');
-        setSearchParams(searchParams);
-        setIsLoggedIn(isAuthenticated());
-        showLoggedInUser();
-      });
-    }
-
-    if (isAuthenticated()) {
-      showLoggedInUser();
-    }
+    updateHeader(code);
   }, []);
 
   return (
