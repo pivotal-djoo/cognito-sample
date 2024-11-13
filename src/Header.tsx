@@ -38,9 +38,14 @@ function Header() {
       setSearchParams(searchParams);
       setIsLoggedIn(isAuthenticated());
     } else if (isAuthenticated() && isTokenExpired()) {
-      await refreshTokens();
+      await refreshTokens().catch((error) => {
+        console.log('refresh token failed. showing user logged out. ', error);
+        setIsLoggedIn(false);
+      });
     }
-    await showLoggedInUser();
+    if (isAuthenticated()) {
+      await showLoggedInUser();
+    }
   };
 
   useEffect(() => {

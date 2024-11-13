@@ -34,7 +34,7 @@ export const isTokenExpired = () => {
   if (!tokenResponse) {
     return true;
   }
-  if (!tokenResponse.timestamp) {
+  if (!tokenResponse.timestamp || !tokenResponse.expires_in) {
     return true;
   }
   return tokenResponse.timestamp + tokenResponse.expires_in * 1000 < Date.now();
@@ -75,7 +75,7 @@ export const handleLoginRedirect = async (code: string) => {
       localStorage.setItem('tokenResponse', JSON.stringify(tokenResponse));
     })
     .catch((error) => {
-      console.error('Error exchanging code for tokens:', error);
+      console.error('Unable to exchange code for token response:', error);
     });
 };
 
@@ -100,6 +100,9 @@ export const refreshTokens = async () => {
   })
     .then((response) => response.json())
     .then((data) => {
+      if (data.error) {
+        throw new Error(data.error);
+      }
       console.log('Refreshed tokens: ', data);
       const tokenResponse = {
         ...data,
@@ -109,13 +112,16 @@ export const refreshTokens = async () => {
       localStorage.setItem('tokenResponse', JSON.stringify(tokenResponse));
     })
     .catch((error) => {
-      console.error('Error exchanging refresh token: ', error);
+      const errorMessage = 'Unable to exchange refresh token: ' + error.message;
+      console.error(errorMessage);
+      localStorage.removeItem('tokenResponse');
+      return Promise.reject(new Error(errorMessage));
     });
 };
 
 export const getUserInfo: () => Promise<UserInfo | null> = async () => {
   const tokenResponse = getStoredTokenResponse();
-  if (!tokenResponse) {
+  if (!tokenResponse || !tokenResponse.access_token) {
     return Promise.reject(new Error('No logged in user.'));
   }
 
@@ -130,7 +136,7 @@ export const getUserInfo: () => Promise<UserInfo | null> = async () => {
       return data as UserInfo;
     })
     .catch((error) => {
-      console.error('Error retrieving user info: ', error);
+      console.error('Unable to retrieve user info: ', error);
       return null;
     });
 };
