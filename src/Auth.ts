@@ -10,7 +10,18 @@ type TokenResponse = {
   timestamp: number;
 };
 
+type Identity = {
+  providerName: string;
+};
+
+type FacebookPicturePayload = {
+  data: {
+    url: string;
+  };
+};
+
 type UserInfo = {
+  identities: string;
   given_name: string;
   family_name: string;
   date_of_birth: string;
@@ -120,6 +131,28 @@ export const refreshTokens = async () => {
     });
 };
 
+const extractUserInfo = (userInfo: UserInfo) => {
+  if (userInfo.picture && userInfo.identities) {
+    const identities = JSON.parse(userInfo.identities) as Identity[];
+    if (identities && identities.length > 0) {
+      switch (identities[0].providerName) {
+        case 'Facebook': {
+          const picturePayload = JSON.parse(
+            userInfo.picture
+          ) as FacebookPicturePayload;
+          userInfo.picture = decodeURI(picturePayload.data.url);
+          break;
+        }
+        case 'Google': {
+          userInfo.picture = decodeURI(userInfo.picture);
+          break;
+        }
+      }
+    }
+  }
+  return userInfo;
+};
+
 export const getUserInfo: () => Promise<UserInfo | null> = async () => {
   const tokenResponse = getStoredTokenResponse();
   if (!tokenResponse || !tokenResponse.access_token) {
@@ -134,7 +167,7 @@ export const getUserInfo: () => Promise<UserInfo | null> = async () => {
     .then((response) => response.json())
     .then((data) => {
       console.log('User info retrived:', data);
-      return data as UserInfo;
+      return extractUserInfo(data);
     })
     .catch((error) => {
       console.error('Unable to retrieve user info: ', error);

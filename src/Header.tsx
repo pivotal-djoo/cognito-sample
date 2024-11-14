@@ -30,8 +30,7 @@ function Header() {
     if (userInfo) {
       setUserFirstName(userInfo.given_name);
       if (userInfo.picture) {
-        const pictureUri = decodeURI(userInfo.picture);
-        setUserPictureUri(pictureUri);
+        setUserPictureUri(userInfo.picture);
       }
     }
   };
