@@ -18,6 +18,7 @@ function Header() {
   const [expanded, setExpanded] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
   const [userFirstName, setUserFirstName] = useState('');
+  const [userPictureUri, setUserPictureUri] = useState<string | null>(null);
 
   const handleClick = (path: string) => {
     setExpanded(false);
@@ -28,6 +29,10 @@ function Header() {
     const userInfo = await getUserInfo();
     if (userInfo) {
       setUserFirstName(userInfo.given_name);
+      if (userInfo.picture) {
+        const pictureUri = decodeURI(userInfo.picture);
+        setUserPictureUri(pictureUri);
+      }
     }
   };
 
@@ -91,9 +96,20 @@ function Header() {
             <Nav.Link onClick={() => handleClick('/contact')}>Contact</Nav.Link>
           </Nav>
           {userFirstName && (
-            <Navbar.Text className="d-flex my-2 my-lg-0">
-              Welcome, {userFirstName}
-            </Navbar.Text>
+            <div className="d-flex my-2 my-lg-0">
+              <Navbar.Text>Welcome, {userFirstName}</Navbar.Text>
+              {userPictureUri && (
+                <>
+                  <Navbar.Text className="mx-1 mx-lg-2"></Navbar.Text>
+                  <Image
+                    src={userPictureUri}
+                    roundedCircle
+                    width="40"
+                    height="40"
+                  />
+                </>
+              )}
+            </div>
           )}
           <Form className="d-flex my-2 my-lg-0">
             {isLoggedIn ? (

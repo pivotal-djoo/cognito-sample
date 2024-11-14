@@ -14,6 +14,7 @@ type UserInfo = {
   given_name: string;
   family_name: string;
   date_of_birth: string;
+  picture: string;
 };
 
 const getStoredTokenResponse: () => TokenResponse | null = () => {
