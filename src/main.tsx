@@ -9,7 +9,8 @@ import {
 import About from './About.tsx';
 import App from './App.tsx';
 import Home from './Home.tsx';
-import Login from './Login.tsx';
+import NewReservation from './NewReservation.tsx';
+import { default as Login, default as Reservations } from './Reservations.tsx';
 import Services from './Services.tsx';
 
 const router = createBrowserRouter(
@@ -18,6 +19,8 @@ const router = createBrowserRouter(
       <Route index element={<Home />} />
       <Route path="about" element={<About />} />
       <Route path="services" element={<Services />} />
+      <Route path="reservations" element={<Reservations />} />
+      <Route path="request-reservation" element={<NewReservation />} />
       <Route path="login" element={<Login />} />
       <Route path="*" element={<Home />} />
     </Route>

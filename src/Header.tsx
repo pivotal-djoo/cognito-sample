@@ -22,6 +22,7 @@ function Header() {
 
   const handleClick = (path: string) => {
     setExpanded(false);
+    window.scrollTo(0, 0);
     navigate(path);
   };
 
@@ -89,8 +90,16 @@ function Header() {
             <Nav.Link onClick={() => handleClick('/services')}>
               Services
             </Nav.Link>
-            <Nav.Link onClick={() => handleClick('/testimonials')}>
-              Testimonials
+            <Nav.Link
+              onClick={() => {
+                if (isLoggedIn) {
+                  handleClick('/reservations');
+                } else {
+                  login();
+                }
+              }}
+            >
+              Reservations
             </Nav.Link>
             <Nav.Link onClick={() => handleClick('/contact')}>Contact</Nav.Link>
           </Nav>

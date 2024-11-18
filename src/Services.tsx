@@ -18,7 +18,7 @@ function Services() {
         <p className="fs-5 mb-5">Available services</p>
 
         <p className="mb-2">
-          <span className="text-info">Lorem ipsum dolor sit amet, </span>{' '}
+          <span className="text-primary">Lorem ipsum dolor sit amet, </span>{' '}
           consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
           labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
           exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
