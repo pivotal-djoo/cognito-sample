@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Button, Card, Container, Image } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import Hydration from './assets/hydration.webp';
-import { formatDate, formatTimeFromMinutes } from './Utils';
+import Hydration from '../../assets/hydration.webp';
+import { formatDate, formatTimeFromMinutes } from '../../utils/utils';
 
 type Reservation = {
   service: string;

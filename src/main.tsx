@@ -6,12 +6,12 @@ import {
   Route,
   RouterProvider,
 } from 'react-router-dom';
-import About from './About.tsx';
 import App from './App.tsx';
-import Home from './Home.tsx';
-import NewReservation from './NewReservation.tsx';
-import { default as Login, default as Reservations } from './Reservations.tsx';
-import Services from './Services.tsx';
+import About from './components/Home/About.tsx';
+import Home from './components/Home/Home.tsx';
+import Services from './components/Home/Services.tsx';
+import NewReservation from './components/Reservation/NewReservation.tsx';
+import Reservations from './components/Reservation/Reservations.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -21,7 +21,6 @@ const router = createBrowserRouter(
       <Route path="services" element={<Services />} />
       <Route path="reservations" element={<Reservations />} />
       <Route path="request-reservation" element={<NewReservation />} />
-      <Route path="login" element={<Login />} />
       <Route path="*" element={<Home />} />
     </Route>
   )

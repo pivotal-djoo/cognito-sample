@@ -1,7 +1,7 @@
 import { Col, Container, Image, Row } from 'react-bootstrap';
-import FacebookLogo from './assets/facebook.png';
-import InstagramLogo from './assets/instagram.png';
-import TwitterLogo from './assets/twitter.png';
+import FacebookLogo from '../assets/facebook.png';
+import InstagramLogo from '../assets/instagram.png';
+import TwitterLogo from '../assets/twitter.png';
 import ViteLogo from '/vite.svg';
 
 function Footer() {

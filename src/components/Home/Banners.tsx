@@ -1,7 +1,7 @@
 import Carousel from 'react-bootstrap/Carousel';
-import Ceiling from './assets/ceiling.webp';
-import Sauna2 from './assets/sauna2.webp';
-import Spa from './assets/spa.jpg';
+import Ceiling from '../../assets/ceiling.webp';
+import Sauna2 from '../../assets/sauna2.webp';
+import Spa from '../../assets/spa.jpg';
 
 function Banners() {
   const bannerHeight = '75vh';

@@ -1,6 +1,6 @@
 import { Button, Image } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import Pumpkins from './assets/pumpkins.jpg';
+import Pumpkins from '../../assets/pumpkins.jpg';
 
 function About() {
   const navigate = useNavigate();

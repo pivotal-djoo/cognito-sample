@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Button,
@@ -12,32 +12,25 @@ import {
   Row,
 } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import Hydration from './assets/hydration.webp';
-import { getISOStringInLocalTimezone, getTimezoneAdjustedDate } from './Utils';
+import Hydration from '../../assets/hydration.webp';
+import { Service } from '../../models';
+import { getServices } from '../../services/apiService';
+import {
+  getISOStringInLocalTimezone,
+  getTimezoneAdjustedDate,
+} from '../../utils/utils';
 
-type Service = {
-  name: string;
-  duration: number;
-};
-
-type NewReservation = {
+type NewReservationRequest = {
   service: string;
   date: string;
   durationInMinutes: number;
   location: string;
 };
 
-function Reservations() {
+function NewReservation() {
   const navigate = useNavigate();
-  const [services, _setServices] = useState<Service[]>([
-    { name: 'Cryotherapy - Chamber', duration: 40 },
-    { name: 'Cryotherapy - Tub', duration: 40 },
-    { name: 'Deep Tissue Massage Therapy', duration: 80 },
-    { name: 'Pre Event Massage Therapy', duration: 30 },
-    { name: 'Post Event Massage Therapy', duration: 135 },
-    { name: 'Sauna Room', duration: 60 },
-  ]);
-  const [reservation, updateReservation] = useState<NewReservation>({
+  const [services, setServices] = useState<Service[]>([]);
+  const [reservation, updateReservation] = useState<NewReservationRequest>({
     service: '',
     date: '',
     durationInMinutes: 0,
@@ -46,6 +39,14 @@ function Reservations() {
   const [dateTime, setDateTime] = useState<string>('');
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+  useEffect(() => {
+    getServices().then((services) => {
+      if (services) {
+        setServices(services);
+      }
+    });
+  }, []);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDateTime(e.target.value);
@@ -77,7 +78,7 @@ function Reservations() {
 
     if (!dayjs(dateTime).isValid()) {
       setShowError(true);
-      setErrorMessage('Please select a date & time.');
+      setErrorMessage('Please select a date and time.');
       window.scrollTo(0, 0);
       return false;
     } else if (dayjs(dateTime).isBefore(dayjs())) {
@@ -179,4 +180,4 @@ function Reservations() {
   );
 }
 
-export default Reservations;
+export default NewReservation;

@@ -9,7 +9,7 @@ import {
   login,
   logout,
   refreshTokens,
-} from './Auth';
+} from '../services/authService';
 import ViteLogo from '/vite.svg';
 
 function Header() {

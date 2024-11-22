@@ -1,6 +1,4 @@
-const cognitoUri = import.meta.env.VITE_COGNITO_URI;
-const clientId = import.meta.env.VITE_CLIENT_ID;
-const redirectUri = import.meta.env.VITE_REDIRECT_URI;
+import { clientId, cognitoUri, redirectUri } from '../config';
 
 type TokenResponse = {
   id_token: string;

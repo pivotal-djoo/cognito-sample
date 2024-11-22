@@ -1,6 +1,6 @@
 import { Col, Image, Row } from 'react-bootstrap';
-import Bath from './assets/bath.webp';
-import Seats from './assets/seats.jpg';
+import Bath from '../../assets/bath.webp';
+import Seats from '../../assets/seats.jpg';
 import Carousel from './Banners';
 
 function Home() {
