@@ -1,0 +1,9 @@
+{
+  "requestContext": {
+    "http": {
+      "method": "POST",
+      "path": "/",
+      "body": "{\"id\": \"2\",\"service\": \"Deep Tissue Massage Therapy\",\"date\": \"2024-10-21T14:00-0400\",\"durationInMinutes\": 80,\"location\": \"Queen West Store\",\"past\": true,\"status\": \"Completed\"}"
+    }
+  }
+}
