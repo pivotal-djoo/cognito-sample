@@ -26,3 +26,4 @@ dist-ssr
 
 # Vite
 .env.local
+.vite
