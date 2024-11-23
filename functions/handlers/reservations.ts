@@ -6,21 +6,22 @@ import {
   PutCommand,
   ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { APIGatewayProxyResult, LambdaFunctionURLEvent } from 'aws-lambda';
 
 const client = new DynamoDBClient({});
-
 const dynamo = DynamoDBDocumentClient.from(client);
-
 const tableName = process.env.RESERVATIONS_TABLE;
 
-export const reservationsHandler = async (event, context) => {
+export const reservationsHandler = async (
+  event: LambdaFunctionURLEvent
+): Promise<APIGatewayProxyResult> => {
   let responseBody;
   let statusCode = 200;
   const headers = {
     'Content-Type': 'application/json',
   };
 
-  const { method, path, body: requestBody } = event.requestContext.http;
+  const { method, path } = event.requestContext.http;
 
   try {
     switch (method) {
@@ -54,16 +55,19 @@ export const reservationsHandler = async (event, context) => {
         }
         break;
       case 'POST':
-        console.log('event: ', event);
-        console.log('request body: ', requestBody);
-        let requestJSON = JSON.parse(requestBody);
+        if (!event.body) {
+          throw new Error('Reservation details required.');
+        }
+        let requestJSON = JSON.parse(event.body);
         responseBody = await dynamo.send(
           new PutCommand({
             TableName: tableName,
             Item: requestJSON,
           })
         );
-        responseBody = responseBody.returnedItem;
+        if ('returnedItem' in responseBody) {
+          responseBody = responseBody.returnedItem;
+        }
         // responseBody = `Put item ${requestJSON.id}`;
         break;
       default:
@@ -71,7 +75,11 @@ export const reservationsHandler = async (event, context) => {
     }
   } catch (err) {
     statusCode = 400;
-    responseBody = err.message;
+    if (err instanceof Error) {
+      responseBody = err.message;
+    } else {
+      responseBody = 'An unknown error occurred';
+    }
   } finally {
     responseBody = JSON.stringify(responseBody);
   }

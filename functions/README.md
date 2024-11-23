@@ -1,4 +1,4 @@
-# Stealth Store Serverless
+# Stealth Store Serverless Functions
 
 ## Pre-requisites
 
@@ -7,7 +7,7 @@
 - Node.js: [Install Node.js 22](https://nodejs.org/en/), including the npm package management tool.
 - Docker: [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community).
 
-## Build and Deploy Lambda functions
+## Build and Deploy Lambda Functions
 
 Below will deploy Lambda functions for Stealth Store configured in [template.yaml](./template.yaml).
 
@@ -16,23 +16,26 @@ sam build
 sam deploy
 ```
 
-## Run Lambda functions locally
+## Run Lambda Functions Locally
 
 Run once with a specific event payload.
 
 ```bash
+sam build
 sam local invoke <function name> --event <event JSON file>
 ```
 
 Example:
 
 ```bash
+sam build
 sam local invoke reservations --event ./events/get-all-reservations.json
 ```
 
 Alternatively, run the function in API emulation mode.
 
 ```bash
+sam build
 sam local start-api
 ```
 

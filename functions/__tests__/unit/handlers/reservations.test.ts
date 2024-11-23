@@ -2,13 +2,15 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
+  PutCommandOutput,
   ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { LambdaFunctionURLEvent } from 'aws-lambda';
 import { mockClient } from 'aws-sdk-client-mock';
 import getAllReservationsEvent from '../../../events/get-all-reservations.json';
 import getReservationByIdEvent from '../../../events/get-reservation-by-id.json';
 import postReservationEvent from '../../../events/post-reservation.json';
-import { reservationsHandler } from '../../../src/handlers/reservations.mjs';
+import { reservationsHandler } from '../../../handlers/reservations';
 
 describe('Test reservationsHandler', () => {
   const ddbMock = mockClient(DynamoDBDocumentClient);
@@ -24,7 +26,9 @@ describe('Test reservationsHandler', () => {
       Items: items,
     });
 
-    const result = await reservationsHandler(getAllReservationsEvent);
+    const result = await reservationsHandler(
+      getAllReservationsEvent as LambdaFunctionURLEvent
+    );
 
     const expectedResult = {
       statusCode: 200,
@@ -41,7 +45,9 @@ describe('Test reservationsHandler', () => {
       Item: item,
     });
 
-    const result = await reservationsHandler(getReservationByIdEvent);
+    const result = await reservationsHandler(
+      getReservationByIdEvent as LambdaFunctionURLEvent
+    );
 
     const expectedResult = {
       statusCode: 200,
@@ -56,9 +62,11 @@ describe('Test reservationsHandler', () => {
 
     ddbMock.on(PutCommand).resolves({
       returnedItem,
-    });
+    } as unknown as PutCommandOutput);
 
-    const result = await reservationsHandler(postReservationEvent);
+    const result = await reservationsHandler(
+      postReservationEvent as LambdaFunctionURLEvent
+    );
 
     const expectedResult = {
       statusCode: 200,

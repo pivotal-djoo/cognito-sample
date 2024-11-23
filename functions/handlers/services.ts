@@ -1,4 +1,8 @@
-export const servicesHandler = async (event) => {
+import { APIGatewayProxyResult, LambdaFunctionURLEvent } from 'aws-lambda';
+
+export const servicesHandler = async (
+  event: LambdaFunctionURLEvent
+): Promise<APIGatewayProxyResult> => {
   const services = [
     { name: 'Cryotherapy - Chamber', duration: 40 },
     { name: 'Cryotherapy - Tub', duration: 40 },
