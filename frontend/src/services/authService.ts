@@ -26,7 +26,7 @@ type UserInfo = {
   picture: string;
 };
 
-const getStoredTokenResponse: () => TokenResponse | null = () => {
+const getStoredTokenResponse = (): TokenResponse | null => {
   const serializedTokenResponse = localStorage.getItem('tokenResponse');
   if (!serializedTokenResponse) {
     return null;
@@ -34,12 +34,12 @@ const getStoredTokenResponse: () => TokenResponse | null = () => {
   return JSON.parse(serializedTokenResponse) as TokenResponse;
 };
 
-export const isAuthenticated = () => {
+export const isAuthenticated = (): boolean => {
   const tokenResponse = localStorage.getItem('tokenResponse');
   return !!tokenResponse;
 };
 
-export const isTokenExpired = () => {
+export const isTokenExpired = (): boolean => {
   const tokenResponse = getStoredTokenResponse();
   if (!tokenResponse) {
     return true;
@@ -56,10 +56,11 @@ export const login = () => {
 
 export const logout = () => {
   localStorage.removeItem('tokenResponse');
+  localStorage.removeItem('userEmail');
   window.location.href = `${cognitoUri}/logout?client_id=${clientId}&logout_uri=${redirectUri}`;
 };
 
-export const handleLoginRedirect = async (code: string) => {
+export const handleLoginRedirect = async (code: string): Promise<void> => {
   const urlEncodedData = new URLSearchParams({
     grant_type: 'authorization_code',
     client_id: clientId,
@@ -89,7 +90,7 @@ export const handleLoginRedirect = async (code: string) => {
     });
 };
 
-export const refreshTokens = async () => {
+export const refreshTokens = async (): Promise<void> => {
   const storedTokenResponse = getStoredTokenResponse();
   if (!storedTokenResponse) {
     return Promise.reject(new Error('No logged in user.'));
@@ -129,7 +130,7 @@ export const refreshTokens = async () => {
     });
 };
 
-const extractUserInfo = (userInfo: UserInfo) => {
+const extractUserInfo = (userInfo: UserInfo): UserInfo => {
   if (userInfo.picture && userInfo.identities) {
     const identities = JSON.parse(userInfo.identities) as Identity[];
     if (identities && identities.length > 0) {
@@ -151,7 +152,7 @@ const extractUserInfo = (userInfo: UserInfo) => {
   return userInfo;
 };
 
-export const getUserInfo: () => Promise<UserInfo | null> = async () => {
+export const getUserInfo = async (): Promise<UserInfo | null> => {
   const tokenResponse = getStoredTokenResponse();
   if (!tokenResponse || !tokenResponse.access_token) {
     return Promise.reject(new Error('No logged in user.'));
@@ -165,10 +166,19 @@ export const getUserInfo: () => Promise<UserInfo | null> = async () => {
     .then((response) => response.json())
     .then((data) => {
       console.log('User info retrived:', data);
+      localStorage.setItem('userEmail', data.email);
       return extractUserInfo(data);
     })
     .catch((error) => {
       console.error('Unable to retrieve user info: ', error);
       return null;
     });
+};
+
+export const getUserEmail = (): string | null => {
+  return localStorage.getItem('userEmail');
+};
+
+export const getIdToken = (): string | null => {
+  return getStoredTokenResponse()?.id_token ?? null;
 };

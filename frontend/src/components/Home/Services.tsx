@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Accordion, Image } from 'react-bootstrap';
+import { Accordion, Button, Image } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import Sauna from '../../assets/sauna.webp';
 import { Service } from '../../models';
 import { getServices } from '../../services/apiService';
 
 function Services() {
+  const navigate = useNavigate();
   const [services, setServices] = useState<Service[]>([]);
 
   useEffect(() => {
@@ -14,6 +16,10 @@ function Services() {
       }
     });
   }, []);
+
+  const handleRequestReservation = (service: Service) => {
+    navigate('/request-reservation', { state: { selectedService: service } });
+  };
 
   return (
     <>
@@ -43,10 +49,18 @@ function Services() {
             <Accordion.Item eventKey={`${index} ${service.name}`} key={index}>
               <Accordion.Header>{service.name}</Accordion.Header>
               <Accordion.Body>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                enim ad minim veniam, quis nostrud exercitation ullamco laboris
-                nisi ut aliquip ex ea commodo consequat.
+                <p>
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
+                  laboris nisi ut aliquip ex ea commodo consequat.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleRequestReservation(service)}
+                >
+                  Request a reservation
+                </Button>
               </Accordion.Body>
             </Accordion.Item>
           ))}

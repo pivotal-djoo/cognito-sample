@@ -11,29 +11,26 @@ import {
   Image,
   Row,
 } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Hydration from '../../assets/hydration.webp';
-import { Service } from '../../models';
-import { getServices } from '../../services/apiService';
+import { ReservationRequest, Service } from '../../models';
+import { getServices, requestReservation } from '../../services/apiService';
 import {
+  formatTimeFromMinutes,
   getISOStringInLocalTimezone,
   getTimezoneAdjustedDate,
 } from '../../utils/utils';
 
-type NewReservationRequest = {
-  service: string;
-  date: string;
-  durationInMinutes: number;
-  location: string;
-};
-
 function NewReservation() {
+  const location = useLocation();
+  const selectedService = (location.state?.selectedService as Service) || {};
+
   const navigate = useNavigate();
   const [services, setServices] = useState<Service[]>([]);
-  const [reservation, updateReservation] = useState<NewReservationRequest>({
-    service: '',
+  const [reservation, updateReservation] = useState<ReservationRequest>({
+    service: selectedService.name || '',
     date: '',
-    durationInMinutes: 0,
+    durationInMinutes: selectedService.duration || 0,
     location: '',
   });
   const [dateTime, setDateTime] = useState<string>('');
@@ -64,10 +61,11 @@ function NewReservation() {
       parseInt(hour),
       parseInt(minute)
     );
+
     return getISOStringInLocalTimezone(reservationDate);
   };
 
-  const handleRequestNewReservation = () => {
+  const handleRequestNewReservation = async () => {
     setShowError(false);
     if (!reservation.service || reservation.service.length === 0) {
       setShowError(true);
@@ -93,9 +91,17 @@ function NewReservation() {
       date: getReservationDate(),
     };
 
-    console.log('New reservation: ', updatedReservation);
-    window.scrollTo(0, 0);
-    navigate('/reservations');
+    console.log('Updated reservation: ', updatedReservation);
+
+    await requestReservation(updatedReservation)
+      .then(() => {
+        window.scrollTo(0, 0);
+        navigate('/reservations');
+      })
+      .catch((error) => {
+        setShowError(true);
+        setErrorMessage(`Unable to request this reservation.\n${error}`);
+      });
   };
 
   const getMinDate = () => {
@@ -164,6 +170,12 @@ function NewReservation() {
                 min={getMinDate()}
                 required
               />
+            </Col>
+            <Col sm={4}>
+              <p>Duration</p>
+            </Col>
+            <Col sm={8} className="mb-3">
+              <p>{formatTimeFromMinutes(reservation.durationInMinutes)}</p>
             </Col>
           </Row>
 

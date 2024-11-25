@@ -1,8 +1,13 @@
-import { useState } from 'react';
-import { Button, Card, Container, Image } from 'react-bootstrap';
+import { useEffect, useState } from 'react';
+import { Alert, Button, Card, Container, Image } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import Hydration from '../../assets/hydration.webp';
-import { formatDate, formatTimeFromMinutes } from '../../utils/utils';
+import { getAllReservations } from '../../services/apiService';
+import {
+  formatDate,
+  formatTimeFromMinutes,
+  sortByDate,
+} from '../../utils/utils';
 
 type Reservation = {
   service: string;
@@ -34,34 +39,31 @@ function ReservationCard({
 
 function Reservations() {
   const navigate = useNavigate();
-  const [reservations, _setReservations] = useState<Reservation[]>([
-    {
-      service: 'Cryotherapy - Chamber',
-      date: '2025-02-21T18:00-0500',
-      durationInMinutes: 40,
-      location: 'Queen West Store',
-      past: false,
-      status: 'Confirmed',
-    },
-  ]);
-  const [pastReservations, _setPastReservations] = useState<Reservation[]>([
-    {
-      service: 'Deep Tissue Massage Therapy',
-      date: '2024-10-21T14:00-0400',
-      durationInMinutes: 80,
-      location: 'Queen West Store',
-      past: true,
-      status: 'Completed',
-    },
-    {
-      service: 'Post Event Massage Therapy',
-      date: '2024-10-19T20:00-0400',
-      durationInMinutes: 135,
-      location: 'Queen West Store',
-      past: true,
-      status: 'Completed',
-    },
-  ]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [pastReservations, setPastReservations] = useState<Reservation[]>([]);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+  useEffect(() => {
+    getAllReservations()
+      .then((reservations) => {
+        const sortedReservations = sortByDate(reservations);
+        setReservations(
+          sortedReservations.filter((reservation) => !reservation.past)
+        );
+        setPastReservations(
+          sortedReservations.filter((reservation) => reservation.past).reverse()
+        );
+      })
+      .catch((error) => {
+        console.error(error);
+        setErrorMessage(
+          'Error retrieving reservations. Please try again later.'
+        );
+        setShowError(true);
+      });
+  }, []);
+
   return (
     <>
       <Image
@@ -75,6 +77,14 @@ function Reservations() {
       />
       <Container className="ms-0 me-0 ms-lg-5 me-lg-5">
         <div className="px-2 px-sm-5 py-4 py-sm-5" style={{ fontWeight: 200 }}>
+          <Alert
+            variant="danger"
+            show={showError}
+            onClose={() => setShowError(false)}
+            dismissible
+          >
+            {errorMessage}
+          </Alert>
           <p className="fs-5 mb-3">New reservation</p>
           <Button
             className="mb-5"
@@ -99,6 +109,8 @@ function Reservations() {
           ) : (
             <p className="mb-5">You have no upcoming reservations</p>
           )}
+
+          <p className="my-3">&nbsp;</p>
 
           <p className="fs-5 my-3">Past reservations</p>
           {pastReservations.length > 0 ? (

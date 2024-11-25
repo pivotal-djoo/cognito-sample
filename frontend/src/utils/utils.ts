@@ -3,6 +3,7 @@ import 'dayjs/locale/en';
 import duration from 'dayjs/plugin/duration';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { Reservation } from '../models';
 
 dayjs.extend(duration);
 dayjs.extend(localizedFormat);
@@ -39,5 +40,11 @@ export function getTimezoneAdjustedDate(date: Date) {
 }
 
 export function getISOStringInLocalTimezone(date: Date) {
-  return getTimezoneAdjustedDate(date).toISOString();
+  return dayjs(date).format('YYYY-MM-DDTHH:mmZ');
+}
+
+export function sortByDate(reservations: Reservation[]): Reservation[] {
+  return reservations.sort((a, b) => {
+    return dayjs(a.date).isBefore(dayjs(b.date)) ? -1 : 0;
+  });
 }
