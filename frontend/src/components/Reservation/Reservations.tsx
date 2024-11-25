@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Card, Container, Image } from 'react-bootstrap';
+import {
+  Alert,
+  Button,
+  Card,
+  Container,
+  Image,
+  Placeholder,
+} from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import Hydration from '../../assets/hydration.webp';
 import { getAllReservations } from '../../services/apiService';
@@ -18,6 +25,25 @@ type Reservation = {
   status: string;
 };
 
+function ReservationPlaceholder() {
+  return (
+    <Card className="slide-in my-3">
+      <Card.Body>
+        <Placeholder as={Card.Title} animation="glow" className="mb-3">
+          <Placeholder xs={6} />
+        </Placeholder>
+        <Placeholder as={Card.Text} animation="glow">
+          <Placeholder xs={8} className="my-2" />
+          <Placeholder xs={6} className="my-2" />
+          <Placeholder as={Card.Text} animation="glow">
+            <Placeholder xs={4} className="my-2" />
+          </Placeholder>
+        </Placeholder>
+      </Card.Body>
+    </Card>
+  );
+}
+
 function ReservationCard({
   reservation,
   showStatus = false,
@@ -26,7 +52,7 @@ function ReservationCard({
   showStatus?: boolean;
 }) {
   return (
-    <Card className="my-3">
+    <Card className="slide-in my-3">
       <Card.Body>
         <p className="fs-4">{reservation.service}</p>
         <p>{formatDate(reservation.date)}</p>
@@ -39,21 +65,50 @@ function ReservationCard({
 
 function Reservations() {
   const navigate = useNavigate();
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [upcomingReservations, setUpcomingReservations] = useState<
+    Reservation[]
+  >([]);
   const [pastReservations, setPastReservations] = useState<Reservation[]>([]);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getAllReservations()
       .then((reservations) => {
+        setShowError(false);
+        setLoading(true);
+        setUpcomingReservations([]);
+        setPastReservations([]);
+
         const sortedReservations = sortByDate(reservations);
-        setReservations(
-          sortedReservations.filter((reservation) => !reservation.past)
+        const upcomingList = sortedReservations.filter(
+          (reservation) => !reservation.past
         );
-        setPastReservations(
-          sortedReservations.filter((reservation) => reservation.past).reverse()
-        );
+        const pastList = sortedReservations
+          .filter((reservation) => reservation.past)
+          .reverse();
+
+        let upcomingListIndex = 0;
+        let pastListIndex = 0;
+        const interval = setInterval(() => {
+          if (upcomingListIndex < upcomingList.length) {
+            setUpcomingReservations((prevReservations) => {
+              const reservation = upcomingList[upcomingListIndex];
+              upcomingListIndex += 1;
+              return [...prevReservations, reservation];
+            });
+          } else if (pastListIndex < pastList.length) {
+            setPastReservations((prevReservations) => {
+              const reservation = pastList[pastListIndex];
+              pastListIndex += 1;
+              return [...prevReservations, reservation];
+            });
+          } else {
+            clearInterval(interval);
+            setLoading(false);
+          }
+        }, 100);
       })
       .catch((error) => {
         console.error(error);
@@ -61,6 +116,7 @@ function Reservations() {
           'Error retrieving reservations. Please try again later.'
         );
         setShowError(true);
+        setLoading(false);
       });
   }, []);
 
@@ -78,6 +134,7 @@ function Reservations() {
       <Container className="ms-0 me-0 ms-lg-5 me-lg-5">
         <div className="px-2 px-sm-5 py-4 py-sm-5" style={{ fontWeight: 200 }}>
           <Alert
+            className="mb-5"
             variant="danger"
             show={showError}
             onClose={() => setShowError(false)}
@@ -98,16 +155,21 @@ function Reservations() {
           </Button>
 
           <p className="fs-5 my-3">Upcoming reservations</p>
-          {reservations.length > 0 ? (
-            reservations.map((reservation) => (
+          {upcomingReservations.length > 0 ? (
+            upcomingReservations.map((reservation) => (
               <ReservationCard
                 key={reservation.date}
                 reservation={reservation}
                 showStatus={true}
               />
             ))
+          ) : loading ? (
+            <>
+              <ReservationPlaceholder />
+              <ReservationPlaceholder />
+            </>
           ) : (
-            <p className="mb-5">You have no upcoming reservations</p>
+            <p className="mb-5">No upcoming reservations found</p>
           )}
 
           <p className="my-3">&nbsp;</p>
@@ -120,8 +182,10 @@ function Reservations() {
                 key={reservation.date}
               />
             ))
+          ) : loading ? (
+            <ReservationPlaceholder />
           ) : (
-            <p className="mb-5">You have no past reservations</p>
+            <p className="mb-5">No past reservations found</p>
           )}
         </div>
       </Container>

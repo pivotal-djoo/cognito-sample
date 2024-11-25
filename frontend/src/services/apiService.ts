@@ -1,13 +1,14 @@
 import { reservationsUri, servicesUri } from '../config';
 import { Reservation, ReservationRequest, Service } from '../models';
-import { getIdToken, getUserEmail } from './authService';
+import { getIdToken, getUserEmail, refreshTokens } from './authService';
 
 export async function getServices(): Promise<Service[]> {
-  return fetch(servicesUri)
-    .then((response) => response.json())
-    .catch((error) => {
-      console.error('Unable to retrieve services:', error);
-    });
+  return fetch(servicesUri).then(async (response) => {
+    if (response.status !== 200) {
+      throw new Error(await response.text());
+    }
+    return response.json();
+  });
 }
 
 export async function getAllReservations(): Promise<Reservation[]> {
@@ -16,10 +17,24 @@ export async function getAllReservations(): Promise<Reservation[]> {
     return Promise.reject(new Error('No logged in user.'));
   }
   const idToken = getIdToken();
-
-  return fetch(reservationsUri, {
+  const request = {
     headers: { Authorization: `Bearer ${idToken}` },
-  }).then((response) => response.json());
+  };
+
+  return fetch(reservationsUri, request)
+    .then(async (response) => {
+      if (response.status === 401) {
+        await refreshTokens();
+        return fetch(reservationsUri, request);
+      }
+      return response;
+    })
+    .then(async (response) => {
+      if (response.status !== 200) {
+        throw new Error(await response.text());
+      }
+      return response.json();
+    });
 }
 
 export async function requestReservation(
@@ -30,15 +45,26 @@ export async function requestReservation(
     return Promise.reject(new Error('No logged in user.'));
   }
   const idToken = getIdToken();
-
-  return fetch(reservationsUri, {
+  const request = {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${idToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(reservation),
-  }).then(() => {
-    return;
-  });
+  };
+
+  return fetch(reservationsUri, request)
+    .then(async (response) => {
+      if (response.status === 401) {
+        await refreshTokens();
+        return fetch(reservationsUri, request);
+      }
+      return response;
+    })
+    .then(async (response) => {
+      if (response.status !== 201) {
+        throw new Error(await response.text());
+      }
+    });
 }
