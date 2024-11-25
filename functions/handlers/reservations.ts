@@ -6,7 +6,9 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayProxyEventHeaders, Handler } from 'aws-lambda';
+import { v4 as uuidv4 } from 'uuid';
 import { getAuthToken, verifyToken } from '../utils/auth';
+import { populatePastField } from '../utils/utils';
 
 const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
@@ -34,7 +36,8 @@ const handleGetAll = async (userEmail: string): Promise<string> => {
     })
   );
   if (queryResult.Items) {
-    return JSON.stringify(queryResult.Items);
+    const reservations = populatePastField(queryResult.Items);
+    return JSON.stringify(reservations);
   } else {
     throw new Error(`Unable to retrieve all reservations for: ${userEmail}`);
   }
@@ -65,8 +68,12 @@ const handlePut = async (userEmail: string, requestBody?: string) => {
     throw new Error('Reservation details required.');
   }
 
-  const requestJSON = JSON.parse(requestBody);
-  requestJSON['email'] = userEmail;
+  const requestJSON = {
+    ...JSON.parse(requestBody),
+    id: uuidv4(),
+    email: userEmail,
+    status: 'Requested',
+  };
 
   const putResult = await dynamo.send(
     new PutCommand({

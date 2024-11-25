@@ -12,7 +12,9 @@
     "@aws-sdk/client-dynamodb": "^3.398.0",
     "@aws-sdk/lib-dynamodb": "^3.398.0",
     "aws-jwt-verify": "^4.0.1",
-    "esbuild": "^0.14.14"
+    "dayjs": "^1.11.13",
+    "esbuild": "^0.14.14",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@jest/globals": "^29.2.1",
