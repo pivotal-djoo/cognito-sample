@@ -21,6 +21,9 @@ Resources:
       Environment:
         Variables:
           RESERVATIONS_TABLE: stealth-store-reservations
+          USER_POOL_ID: '{{resolve:ssm:/stealth-store/lambda/user-pool-id}}'
+          CLIENT_ID: '{{resolve:ssm:/stealth-store/lambda/client-id}}'
+
     Metadata:
       BuildMethod: esbuild
       BuildProperties:

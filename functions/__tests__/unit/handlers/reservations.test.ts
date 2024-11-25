@@ -1,78 +1,243 @@
 import {
+  DeleteCommand,
   DynamoDBDocumentClient,
-  GetCommand,
   PutCommand,
-  PutCommandOutput,
-  ScanCommand,
+  QueryCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { LambdaFunctionURLEvent } from 'aws-lambda';
+import {
+  APIGatewayProxyCallback,
+  Context,
+  LambdaFunctionURLEvent,
+} from 'aws-lambda';
 import { mockClient } from 'aws-sdk-client-mock';
+import deleteReservationByIdEvent from '../../../events/delete-reservation-by-id.json';
 import getAllReservationsEvent from '../../../events/get-all-reservations.json';
 import getReservationByIdEvent from '../../../events/get-reservation-by-id.json';
 import postReservationEvent from '../../../events/post-reservation.json';
 import { reservationsHandler } from '../../../handlers/reservations';
+import { verifyToken } from '../../../utils/auth';
 
-describe('Test reservationsHandler', () => {
+jest.mock('../../../utils/auth', () => ({
+  ...jest.requireActual('../../../utils/auth'),
+  verifyToken: jest.fn(),
+}));
+
+describe('Test reservations Handler', () => {
   const ddbMock = mockClient(DynamoDBDocumentClient);
+  const userEmail = 'user@email.com';
+  const testTableName = 'test-table-name';
 
   beforeEach(() => {
     ddbMock.reset();
+    (verifyToken as jest.Mock).mockReturnValue({ email: userEmail });
+    process.env.RESERVATIONS_TABLE = testTableName;
   });
 
-  it('should return all reservations', async () => {
-    const items = [{ id: 'id1' }, { id: 'id2' }];
+  describe('authorization header', () => {
+    it('should call verify token', async () => {
+      const items = [{ id: 'id1' }, { id: 'id2' }];
 
-    ddbMock.on(ScanCommand).resolves({
-      Items: items,
+      ddbMock.on(QueryCommand).resolves({
+        Items: items,
+      });
+
+      const result = await reservationsHandler(
+        getAllReservationsEvent as unknown as LambdaFunctionURLEvent,
+        undefined as unknown as Context,
+        undefined as unknown as APIGatewayProxyCallback
+      );
+
+      expect(verifyToken).toHaveBeenCalledWith(
+        getAllReservationsEvent.headers.Authorization.replace('Bearer ', '')
+      );
     });
 
-    const result = await reservationsHandler(
-      getAllReservationsEvent as LambdaFunctionURLEvent
-    );
+    it('should return 401 when "Authorization" header is not provided', async () => {
+      const items = [{ id: 'id1' }, { id: 'id2' }];
 
-    const expectedResult = {
-      statusCode: 200,
-      body: JSON.stringify(items),
-    };
+      ddbMock.on(QueryCommand).resolves({
+        Items: items,
+      });
 
-    expect(result).toEqual(expect.objectContaining(expectedResult));
+      const { headers, ...event } = getAllReservationsEvent;
+
+      const result = await reservationsHandler(
+        event as unknown as LambdaFunctionURLEvent,
+        undefined as unknown as Context,
+        undefined as unknown as APIGatewayProxyCallback
+      );
+
+      expect(result).toEqual(expect.objectContaining({ statusCode: 401 }));
+    });
   });
 
-  it('should get reservation by id', async () => {
-    const item = { id: 'id1' };
+  describe('get all reservations', () => {
+    it('should return all reservations for a user', async () => {
+      const items = [{ id: 'id1' }, { id: 'id2' }];
 
-    ddbMock.on(GetCommand).resolves({
-      Item: item,
+      ddbMock
+        .on(QueryCommand)
+        .resolves({
+          Items: [],
+        })
+        .on(QueryCommand, {
+          TableName: testTableName,
+          IndexName: 'email-index',
+          KeyConditionExpression: 'email = :email',
+          ExpressionAttributeValues: {
+            ':email': userEmail,
+          },
+        })
+        .resolves({
+          Items: items,
+        });
+
+      const result = await reservationsHandler(
+        getAllReservationsEvent as unknown as LambdaFunctionURLEvent,
+        undefined as unknown as Context,
+        undefined as unknown as APIGatewayProxyCallback
+      );
+
+      const expectedResult = {
+        statusCode: 200,
+        body: JSON.stringify(items),
+      };
+
+      expect(result).toEqual(expect.objectContaining(expectedResult));
     });
 
-    const result = await reservationsHandler(
-      getReservationByIdEvent as LambdaFunctionURLEvent
-    );
+    it('should return 400 when encountering an error while querying all reservations', async () => {
+      ddbMock.on(QueryCommand).rejects();
 
-    const expectedResult = {
-      statusCode: 200,
-      body: JSON.stringify(item),
-    };
+      const result = await reservationsHandler(
+        getAllReservationsEvent as unknown as LambdaFunctionURLEvent,
+        undefined as unknown as Context,
+        undefined as unknown as APIGatewayProxyCallback
+      );
 
-    expect(result).toEqual(expect.objectContaining(expectedResult));
+      expect(result).toEqual(expect.objectContaining({ statusCode: 400 }));
+    });
   });
 
-  it('should add a new reservation to the table', async () => {
-    const returnedItem = { id: 'id1', name: 'name1' };
+  describe('get reservation by ID', () => {
+    it('should get reservation by id', async () => {
+      const item = { id: 'id1' };
 
-    ddbMock.on(PutCommand).resolves({
-      returnedItem,
-    } as unknown as PutCommandOutput);
+      ddbMock
+        .on(QueryCommand)
+        .resolves({
+          Items: undefined,
+        })
+        .on(QueryCommand, {
+          TableName: testTableName,
+          KeyConditionExpression: 'email = :email',
+          FilterExpression: 'id = :id',
+          ExpressionAttributeValues: {
+            ':email': userEmail,
+            ':id': getReservationByIdEvent.requestContext.http.path.slice(1),
+          },
+        })
+        .resolves({
+          Items: [item],
+        });
 
-    const result = await reservationsHandler(
-      postReservationEvent as LambdaFunctionURLEvent
-    );
+      const result = await reservationsHandler(
+        getReservationByIdEvent as unknown as LambdaFunctionURLEvent,
+        undefined as unknown as Context,
+        undefined as unknown as APIGatewayProxyCallback
+      );
 
-    const expectedResult = {
-      statusCode: 200,
-      body: JSON.stringify(returnedItem),
-    };
+      const expectedResult = {
+        statusCode: 200,
+        body: JSON.stringify(item),
+      };
 
-    expect(result).toEqual(expect.objectContaining(expectedResult));
+      expect(result).toEqual(expect.objectContaining(expectedResult));
+    });
+
+    it('should return 400 when encountering an error while querying a reservation', async () => {
+      ddbMock.on(QueryCommand).rejects();
+
+      const result = await reservationsHandler(
+        getReservationByIdEvent as unknown as LambdaFunctionURLEvent,
+        undefined as unknown as Context,
+        undefined as unknown as APIGatewayProxyCallback
+      );
+
+      expect(result).toEqual(expect.objectContaining({ statusCode: 400 }));
+    });
+  });
+
+  describe('add a new reservation', () => {
+    it('should add a new reservation', async () => {
+      ddbMock.on(PutCommand).resolves({
+        $metadata: { httpStatusCode: 200 },
+      });
+
+      const result = await reservationsHandler(
+        postReservationEvent as unknown as LambdaFunctionURLEvent,
+        undefined as unknown as Context,
+        undefined as unknown as APIGatewayProxyCallback
+      );
+
+      expect(result).toEqual(expect.objectContaining({ statusCode: 201 }));
+    });
+
+    it('should return 400 when encountering an error', async () => {
+      ddbMock.on(PutCommand).rejects();
+
+      const result = await reservationsHandler(
+        postReservationEvent as unknown as LambdaFunctionURLEvent,
+        undefined as unknown as Context,
+        undefined as unknown as APIGatewayProxyCallback
+      );
+
+      expect(result).toEqual(expect.objectContaining({ statusCode: 400 }));
+    });
+  });
+
+  describe('delete a reservation', () => {
+    it('should delete a reservation by id', async () => {
+      const item = { id: 'id1' };
+
+      ddbMock
+        .on(DeleteCommand)
+        .resolves({
+          $metadata: { httpStatusCode: 404 },
+        })
+        .on(DeleteCommand, {
+          TableName: testTableName,
+          Key: {
+            id: deleteReservationByIdEvent.requestContext.http.path.slice(1),
+          },
+          ConditionExpression: 'email = :email',
+          ExpressionAttributeValues: {
+            ':email': userEmail,
+          },
+        })
+        .resolves({
+          $metadata: { httpStatusCode: 200 },
+        });
+
+      const result = await reservationsHandler(
+        deleteReservationByIdEvent as unknown as LambdaFunctionURLEvent,
+        undefined as unknown as Context,
+        undefined as unknown as APIGatewayProxyCallback
+      );
+
+      expect(result).toEqual(expect.objectContaining({ statusCode: 200 }));
+    });
+
+    it('should return 400 when encountering an error while deleting a reservation', async () => {
+      ddbMock.on(DeleteCommand).rejects();
+
+      const result = await reservationsHandler(
+        deleteReservationByIdEvent as unknown as LambdaFunctionURLEvent,
+        undefined as unknown as Context,
+        undefined as unknown as APIGatewayProxyCallback
+      );
+
+      expect(result).toEqual(expect.objectContaining({ statusCode: 400 }));
+    });
   });
 });

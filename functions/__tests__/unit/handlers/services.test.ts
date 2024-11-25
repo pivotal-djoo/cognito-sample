@@ -4,7 +4,7 @@ import { mockClient } from 'aws-sdk-client-mock';
 import getAllServicesEvent from '../../../events/get-all-services.json';
 import { servicesHandler } from '../../../handlers/services';
 
-describe('Test servicesHandler', () => {
+describe('Test services Handler', () => {
   const ddbMock = mockClient(DynamoDBDocumentClient);
 
   beforeEach(() => {

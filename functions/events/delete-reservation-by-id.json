@@ -1,8 +1,8 @@
 {
   "requestContext": {
     "http": {
-      "method": "GET",
-      "path": "/"
+      "method": "DELETE",
+      "path": "/2"
     }
   },
   "headers": {
