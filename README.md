@@ -1,50 +1,34 @@
-# React + TypeScript + Vite
+# Amazon Cognito Sample
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[https://stealth-store.vercel.app](https://stealth-store.vercel.app)
 
-Currently, two official plugins are available:
+## Pre-requisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- AWS Cognito User Pool: [Getting started with user pools](https://docs.aws.amazon.com/cognito/latest/developerguide/getting-started-user-pools.html)
+- An App Client within your Cognito user pool: [Create a new application in Amazon Cognito console](https://docs.aws.amazon.com/cognito/latest/developerguide/getting-started-user-pools-application.html)
 
-## Expanding the ESLint configuration
+## Run Locally
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+Create `.env.local` file with the following.
 
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+VITE_COGNITO_URI=[Amazon Cognito User Pool URI]
+VITE_CLIENT_ID=[User Pool App Client ID]
+VITE_REDIRECT_URI=http://localhost:5173/redirect
+VITE_LOGOUT_URI=http://localhost:5173
+VITE_SERVICES_URI=[Services URL from aws-lambda-sample repo]
+VITE_RESERVATIONS_URI=[Reservations URL from aws-lambda-sample repo]
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+Install dependencies.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+```bash
+npm install -g pnpm
+pnpm install
+```
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+Run locally.
+
+```bash
+pnpm dev
 ```
