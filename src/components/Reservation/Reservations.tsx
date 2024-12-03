@@ -1,67 +1,13 @@
 import { useEffect, useState } from 'react';
-import {
-  Alert,
-  Button,
-  Card,
-  Container,
-  Image,
-  Placeholder,
-} from 'react-bootstrap';
+import { Alert, Button, Container, Image } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import Hydration from '../../assets/hydration.webp';
+import useLogin from '../../hooks/useLogin';
+import { Reservation } from '../../models';
 import { getAllReservations } from '../../services/apiService';
-import {
-  formatDate,
-  formatTimeFromMinutes,
-  sortByDate,
-} from '../../utils/utils';
-
-type Reservation = {
-  service: string;
-  date: string;
-  durationInMinutes: number;
-  location: string;
-  past: boolean;
-  status: string;
-};
-
-function ReservationPlaceholder() {
-  return (
-    <Card className="slide-in my-3">
-      <Card.Body>
-        <Placeholder as={Card.Title} animation="glow" className="mb-3">
-          <Placeholder xs={6} />
-        </Placeholder>
-        <Placeholder as={Card.Text} animation="glow">
-          <Placeholder xs={8} className="my-2" />
-          <Placeholder xs={6} className="my-2" />
-          <Placeholder as={Card.Text} animation="glow">
-            <Placeholder xs={4} className="my-2" />
-          </Placeholder>
-        </Placeholder>
-      </Card.Body>
-    </Card>
-  );
-}
-
-function ReservationCard({
-  reservation,
-  showStatus = false,
-}: {
-  reservation: Reservation;
-  showStatus?: boolean;
-}) {
-  return (
-    <Card className="slide-in my-3">
-      <Card.Body>
-        <p className="fs-4">{reservation.service}</p>
-        <p>{formatDate(reservation.date)}</p>
-        <p>Duration: {formatTimeFromMinutes(reservation.durationInMinutes)}</p>
-        {showStatus && <p>Status: {reservation.status}</p>}
-      </Card.Body>
-    </Card>
-  );
-}
+import { sortByDate } from '../../utils/utils';
+import ReservationCard from './ReservationCard';
+import ReservationPlaceholder from './ReservationPlaceholder';
 
 function Reservations() {
   const navigate = useNavigate();
@@ -72,43 +18,56 @@ function Reservations() {
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
+  const { isLoggedIn, login } = useLogin();
 
   useEffect(() => {
+    if (isLoggedIn) {
+      fetchReservations();
+    } else {
+      login();
+    }
+  }, [isLoggedIn]);
+
+  function animateInReservations(reservations: Reservation[]) {
+    setUpcomingReservations([]);
+    setPastReservations([]);
+
+    const sortedReservations = sortByDate(reservations);
+    const upcomingList = sortedReservations.filter(
+      (reservation) => !reservation.past
+    );
+    const pastList = sortedReservations
+      .filter((reservation) => reservation.past)
+      .reverse();
+
+    let upcomingListIndex = 0;
+    let pastListIndex = 0;
+    const interval = setInterval(() => {
+      if (upcomingListIndex < upcomingList.length) {
+        setUpcomingReservations((prevReservations) => {
+          const reservation = upcomingList[upcomingListIndex];
+          upcomingListIndex += 1;
+          return [...prevReservations, reservation];
+        });
+      } else if (pastListIndex < pastList.length) {
+        setPastReservations((prevReservations) => {
+          const reservation = pastList[pastListIndex];
+          pastListIndex += 1;
+          return [...prevReservations, reservation];
+        });
+      } else {
+        clearInterval(interval);
+        setLoading(false);
+      }
+    }, 100);
+  }
+
+  function fetchReservations() {
     getAllReservations()
       .then((reservations) => {
         setShowError(false);
         setLoading(true);
-        setUpcomingReservations([]);
-        setPastReservations([]);
-
-        const sortedReservations = sortByDate(reservations);
-        const upcomingList = sortedReservations.filter(
-          (reservation) => !reservation.past
-        );
-        const pastList = sortedReservations
-          .filter((reservation) => reservation.past)
-          .reverse();
-
-        let upcomingListIndex = 0;
-        let pastListIndex = 0;
-        const interval = setInterval(() => {
-          if (upcomingListIndex < upcomingList.length) {
-            setUpcomingReservations((prevReservations) => {
-              const reservation = upcomingList[upcomingListIndex];
-              upcomingListIndex += 1;
-              return [...prevReservations, reservation];
-            });
-          } else if (pastListIndex < pastList.length) {
-            setPastReservations((prevReservations) => {
-              const reservation = pastList[pastListIndex];
-              pastListIndex += 1;
-              return [...prevReservations, reservation];
-            });
-          } else {
-            clearInterval(interval);
-            setLoading(false);
-          }
-        }, 100);
+        animateInReservations(reservations);
       })
       .catch((error) => {
         console.error(error);
@@ -118,7 +77,7 @@ function Reservations() {
         setShowError(true);
         setLoading(false);
       });
-  }, []);
+  }
 
   return (
     <>

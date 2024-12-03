@@ -1,24 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Button, Container, Form, Image, Nav, Navbar } from 'react-bootstrap';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  getUserInfo,
-  handleLoginRedirect,
-  isAuthenticated,
-  isTokenExpired,
-  login,
-  logout,
-  refreshTokens,
-} from '../services/authService';
+import { useNavigate } from 'react-router-dom';
+import useLogin from '../hooks/useLogin';
+import { logout } from '../services/authService';
 import ViteLogo from '/vite.svg';
 
 function Header() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [expanded, setExpanded] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
   const [userFirstName, setUserFirstName] = useState('');
   const [userPictureUri, setUserPictureUri] = useState<string | null>(null);
+  const { isLoggedIn, login, userInfo } = useLogin();
 
   const handleClick = (path: string) => {
     setExpanded(false);
@@ -26,38 +18,14 @@ function Header() {
     navigate(path);
   };
 
-  const showLoggedInUser = async () => {
-    const userInfo = await getUserInfo();
+  useEffect(() => {
     if (userInfo) {
       setUserFirstName(userInfo.given_name);
       if (userInfo.picture) {
         setUserPictureUri(userInfo.picture);
       }
     }
-  };
-
-  const updateHeader = async (code: string | null) => {
-    if (code) {
-      await handleLoginRedirect(code);
-      searchParams.delete('code');
-      setSearchParams(searchParams);
-      setIsLoggedIn(isAuthenticated());
-    } else if (isAuthenticated() && isTokenExpired()) {
-      await refreshTokens().catch((error) => {
-        console.log('refresh token failed. showing user logged out. ', error);
-        setIsLoggedIn(false);
-      });
-    }
-    if (isAuthenticated()) {
-      await showLoggedInUser();
-    }
-  };
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    updateHeader(code);
-  }, []);
+  }, [userInfo]);
 
   return (
     <Navbar
@@ -90,15 +58,7 @@ function Header() {
             <Nav.Link onClick={() => handleClick('/services')}>
               Services
             </Nav.Link>
-            <Nav.Link
-              onClick={() => {
-                if (isLoggedIn) {
-                  handleClick('/reservations');
-                } else {
-                  login();
-                }
-              }}
-            >
+            <Nav.Link onClick={() => handleClick('/reservations')}>
               Reservations
             </Nav.Link>
             <Nav.Link onClick={() => handleClick('/contact')}>Contact</Nav.Link>

@@ -10,6 +10,7 @@ import App from './App.tsx';
 import About from './components/Home/About.tsx';
 import Home from './components/Home/Home.tsx';
 import Services from './components/Home/Services.tsx';
+import Redirect from './components/Redirect.tsx';
 import NewReservation from './components/Reservation/NewReservation.tsx';
 import Reservations from './components/Reservation/Reservations.tsx';
 
@@ -21,6 +22,7 @@ const router = createBrowserRouter(
       <Route path="services" element={<Services />} />
       <Route path="reservations" element={<Reservations />} />
       <Route path="request-reservation" element={<NewReservation />} />
+      <Route path="redirect" element={<Redirect />} />
       <Route path="*" element={<Home />} />
     </Route>
   )

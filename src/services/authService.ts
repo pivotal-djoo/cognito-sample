@@ -1,4 +1,4 @@
-import { clientId, cognitoUri, redirectUri } from '../config';
+import { clientId, cognitoUri, logoutUri, redirectUri } from '../config';
 
 type TokenResponse = {
   id_token: string;
@@ -18,7 +18,7 @@ type FacebookPicturePayload = {
   };
 };
 
-type UserInfo = {
+export type UserInfo = {
   identities: string;
   given_name: string;
   family_name: string;
@@ -57,10 +57,10 @@ export const login = () => {
 export const logout = () => {
   localStorage.removeItem('tokenResponse');
   localStorage.removeItem('userEmail');
-  window.location.href = `${cognitoUri}/logout?client_id=${clientId}&logout_uri=${redirectUri}`;
+  window.location.href = `${cognitoUri}/logout?client_id=${clientId}&logout_uri=${logoutUri}`;
 };
 
-export const handleLoginRedirect = async (code: string): Promise<void> => {
+export const obtainToken = async (code: string): Promise<void> => {
   const urlEncodedData = new URLSearchParams({
     grant_type: 'authorization_code',
     client_id: clientId,
@@ -78,7 +78,6 @@ export const handleLoginRedirect = async (code: string): Promise<void> => {
   })
     .then((response) => response.json())
     .then((data) => {
-      console.log('Received token response: ', data);
       const tokenResponse = {
         ...data,
         timestamp: Date.now(),
